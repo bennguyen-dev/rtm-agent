@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --primary: #1868db;
+  --primary-hover: #1557b7;
+  --border: #e2e8f0;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-border-jira: var(--border);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* RTM table cell styles */
+.rtm-cell p {
+  margin: 0;
+}
+
+.rtm-cell ol {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+.rtm-cell li {
+  margin: 2px 0;
+  line-height: 1.5;
+}
+
+.rtm-cell strong {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+/* RTM table base */
+.rtm-table {
+  border-collapse: collapse;
+}
+
+.rtm-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .rtm-cell strong {
+    color: black;
+  }
+}

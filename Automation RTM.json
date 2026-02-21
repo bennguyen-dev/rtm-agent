@@ -1,0 +1,513 @@
+{
+  "name": "Automation RTM",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Requirements",
+        "formDescription": "Please define requirements",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Ticket Id",
+              "placeholder": "YR-00000",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Descriptions",
+              "fieldType": "textarea",
+              "placeholder": "Copy all description from ticket",
+              "requiredField": true
+            }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": {
+          "appendAttribution": true
+        }
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [208, -512],
+      "id": "c879cada-eb8e-4e79-ba29-1aa9daee3f76",
+      "name": "On form submission",
+      "webhookId": "61596cbc-636a-4b8a-b67c-c60c6a170fbd"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1hXuYbn6KkrPaEPMewgBCsp5mjeTnew6pfa24gURZiDA",
+          "mode": "list",
+          "cachedResultName": "Automation TCs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hXuYbn6KkrPaEPMewgBCsp5mjeTnew6pfa24gURZiDA/edit?usp=drivesdk"
+        },
+        "title": "={{ $('On form submission').item.json['Ticket Id'] }} (English)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [464, -288],
+      "id": "e696defd-e31d-44bd-8955-1425a33e2351",
+      "name": "Create Sheet for ticket",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9LnyPL9HjJjMEjt8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const aiResponse = $input.first().json.output;\n\n// Clean markdown formatting\nconst cleanedResponse = aiResponse\n  .replace(/^```json\\s*\\n?/gm, '')\n  .replace(/\\n?```$/gm, '')\n  .trim();\n\n// Parse and return\nreturn JSON.parse(cleanedResponse);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1088, -288],
+      "id": "be8cde17-c35f-44fa-9c0f-71d6546e38ca",
+      "name": "Parse JSON",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1hXuYbn6KkrPaEPMewgBCsp5mjeTnew6pfa24gURZiDA",
+          "mode": "list",
+          "cachedResultName": "Automation TCs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hXuYbn6KkrPaEPMewgBCsp5mjeTnew6pfa24gURZiDA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create Sheet for ticket').item.json.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Input",
+              "displayName": "Input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expected_result",
+              "displayName": "Expected_result",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Group",
+              "displayName": "Group",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [1504, -288],
+      "id": "26324b16-03a3-4fce-98e1-23a57b378de1",
+      "name": "Update TCs to sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9LnyPL9HjJjMEjt8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "test_cases",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [1312, -288],
+      "id": "ee6bf206-2059-4251-a760-8668a7c2c4b1",
+      "name": "Split TCs"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [640, -32],
+      "id": "e6a60654-0b22-436a-9fbf-b714ab0e4fe7",
+      "name": "Gemini 2.0 flash",
+      "credentials": {
+        "openRouterApi": {
+          "id": "RaguXmfMLmMbcRAY",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1hXuYbn6KkrPaEPMewgBCsp5mjeTnew6pfa24gURZiDA",
+          "mode": "list",
+          "cachedResultName": "Automation TCs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hXuYbn6KkrPaEPMewgBCsp5mjeTnew6pfa24gURZiDA/edit?usp=drivesdk"
+        },
+        "title": "={{ $('On form submission').item.json['Ticket Id'] }} (Vietnamese)",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [464, -768],
+      "id": "8a72cb75-7aa2-4556-9898-f1fc1368242c",
+      "name": "Create Sheet for ticket1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9LnyPL9HjJjMEjt8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractJsonFromText(text) {\n  // 1. Nếu có block ```json ... ``` thì lấy phần bên trong\n  const match = text.match(/```json\\s*([\\s\\S]*?)\\s*```/);\n  let jsonString = match && match[1] ? match[1] : text;\n\n  // 2. Cleanup cơ bản\n  jsonString = jsonString.trim();\n  // Xóa dấu phẩy thừa trước } hoặc ]\n  jsonString = jsonString.replace(/,\\s*([\\]}])/g, \"$1\");\n  // Escape newline thật trong chuỗi (tránh lỗi parse)\n  // jsonString = jsonString.replace(/,\\s*([\\]}])/g, \"$1\");\n\n  // 3. Parse thử nhiều lớp (JSON trong JSON)\n  try {\n    let parsed = JSON.parse(jsonString);\n    // Nếu parse ra string chứa JSON → parse tiếp\n    while (typeof parsed === \"string\") {\n      parsed = JSON.parse(parsed);\n    }\n    return parsed;\n  } catch (err) {\n    throw new Error(\"JSON parse error: \" + err.message + \"\\n--- RAW ---\\n\" + jsonString);\n  }\n}\n\n\n\nconst inputText = $input.first().json.output;\n\nreturn extractJsonFromText(inputText);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1088, -768],
+      "id": "c6c95666-f7d2-4648-ba92-e52d441c053c",
+      "name": "Parse JSON1",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1hXuYbn6KkrPaEPMewgBCsp5mjeTnew6pfa24gURZiDA",
+          "mode": "list",
+          "cachedResultName": "Automation TCs",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hXuYbn6KkrPaEPMewgBCsp5mjeTnew6pfa24gURZiDA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create Sheet for ticket1').item.json.sheetId }}",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Action",
+              "displayName": "Action",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Input",
+              "displayName": "Input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Expected_result",
+              "displayName": "Expected_result",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Group",
+              "displayName": "Group",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [1504, -768],
+      "id": "2f6f23d2-1515-4b1b-a13a-6869ff5e9bf5",
+      "name": "Update TCs to sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "9LnyPL9HjJjMEjt8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "test_cases",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [1312, -768],
+      "id": "46884f33-282a-44df-a9b5-ffd4284525be",
+      "name": "Split TCs1"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [1360, -480],
+      "id": "b43205f1-f4f8-4345-af57-847449da925d",
+      "name": "Gemini 2.0 flash1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "RaguXmfMLmMbcRAY",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Now: {{ $('On form submission').item.json.submittedAt }}\n# Prompt Tạo Test Case Nâng Cao\n\nBạn sẽ đóng vai một QA Engineer cấp cao, tỉ mỉ và có kinh nghiệm. Nhiệm vụ của bạn là tạo ra một bộ test case toàn diện để xác thực trực tiếp các yêu cầu cụ thể được nêu trong feature ticket bên dưới.\n\n## LUẬT BẮT BUỘC:\n\n### 1. Định Dạng Đầu Ra:\n- Kết quả cuối cùng phải là một **object JSON thuần duy nhất**. Không được bọc trong code block hoặc thêm bất kỳ văn bản giải thích nào.\n- Object JSON này phải chứa một key duy nhất: `\"test_cases\"`.\n- Giá trị của `\"test_cases\"` phải là một mảng các object, trong đó mỗi object đại diện cho một bước test.\n\n### 2. Cấu Trúc Object Bước Test:\nMỗi object trong mảng `\"test_cases\"` phải chứa chính xác bốn cặp key-value sau:\n- `\"Action\"`: (String) Hành động mà người dùng thực hiện.\n- `\"Input\"`: (String) Dữ liệu đầu vào hoặc điều kiện tiên quyết cho hành động.\n- `\"Expected result\"`: (String) Kết quả mong đợi sau khi thực hiện hành động.\n- `\"Group\"`: (String) Tên của kịch bản test hoặc nhóm test.\n\n### 3. Hướng Dẫn Nội Dung và Định Dạng:\n\n**QUAN TRỌNG: Sử Dụng HTML Để Định Dạng**\n- Bạn phải sử dụng các thẻ HTML đơn giản trong các giá trị string để định dạng văn bản cho dễ đọc.\n- Sử dụng `<p>` cho đoạn văn, `<ol>` và `<li>` cho danh sách có thứ tự, và `<strong>` để nhấn mạnh.\n- Đây là yêu cầu bắt buộc.\n\n**Nhóm Logic:**\n- Sử dụng key \"Group\" để phân loại các bước liên quan.\n- Sử dụng tên nhóm mô tả như:\n  - \"Tải Trang Ban Đầu & Trạng Thái Mặc Định\"\n  - \"Logic Hiển Thị Section\"\n  - \"Xác Thực Modal - [Loại Giảm Giá]\"\n  - \"Xác Thực Dữ Liệu Đầu Vào - [Tên Trường]\"\n  - \"Xử Lý Lỗi - [Lỗi Cụ Thể]\"\n  - \"Luồng Thành Công - [Hành Động]\"\n  - \"Chuyển Đổi Trạng Thái UI\"\n  - \"Giá Trị Mặc Định & Điền Sẵn\"\n  - \"Xác Thực Quy Tắc Nghiệp Vụ\"\n\n### 4. BẢO ĐẢM YÊU CẦU TOÀN DIỆN:\n\n**A. Test Hiển Thị UI & Layout:**\n- Test tải trang ban đầu với trạng thái mặc định\n- Xác thực phân chia section và nội dung của chúng\n- Test thông báo trạng thái trống (xác thực văn bản chính xác)\n- Test thông báo trạng thái \"đã thêm tất cả giảm giá\"\n- Xác thực thứ tự card trong cả hai section\n- Test hành vi responsive và các phần tử dành riêng cho mobile\n\n**B. Giá Trị Mặc Định & Điền Sẵn:**\n- Test tất cả giá trị mặc định được đề cập trong yêu cầu\n- Xác thực các option được chọn sẵn và hành vi của chúng\n- Test hành vi mặc định dựa trên flag (như YR-19690)\n- Xác thực việc áp dụng giảm giá mặc định cho listing mới\n\n**C. Test Hành Vi Modal:**\n- Test mở/đóng modal cho từng loại giảm giá\n- Xác thực tiêu đề và nội dung modal chính xác\n- Test chức năng tất cả các nút (Add, Cancel, Close)\n- Test sự bền vững trạng thái modal và việc xóa dữ liệu\n\n**D. Xác Thực Đầu Vào (Chi Tiết):**\n- Test hạn chế kiểu dữ liệu của từng trường\n- Test giới hạn số thập phân (tối đa 2 chữ số thập phân)\n- Test ràng buộc giá trị tối thiểu/tối đa\n- Test xác thực số nguyên vs số thực\n- Test xác thực trường trống\n- Test hiển thị bàn phím mobile cho trường số\n- Test ký tự đặc biệt và đầu vào không hợp lệ\n\n**E. Xác Thực Thông Báo Lỗi:**\n- Test văn bản thông báo lỗi chính xác cho từng quy tắc xác thực\n- Test vị trí và thời điểm hiển thị thông báo lỗi\n- Test hành vi xóa thông báo lỗi\n- Test các kịch bản lỗi multiple\n\n**F. Test Luồng Thành Công:**\n- Test gửi dữ liệu thành công\n- Test hiển thị toast message và thời gian tự động đóng (2s)\n- Test sự bền vững dữ liệu trong database\n- Test cập nhật trạng thái UI sau khi thành công\n\n**G. Test Nội Dung Động:**\n- Test thay đổi định dạng tên dựa trên số lượng giảm giá\n- Test biến thể định dạng nội dung (1 vs 2-4 giảm giá)\n- Test hiển thị channel theo thứ tự alphabet\n- Test luồng xóa và thêm lại giảm giá\n\n**H. Xác Thực Logic Nghiệp Vụ:**\n- Test yêu cầu thứ tự loại giảm giá\n- Test logic di chuyển section (Available ↔ Active)  \n- Test yêu cầu lựa chọn channel\n- Test quy tắc xác thực độ dài stay\n- Test logic tính toán phần trăm\n\n### 5. ĐIỂM XÁC THỰC CỤ THỂ CẦN BAO GỒM:\n\n**Cho Mỗi Loại Giảm Giá, Test:**\n- Hình thức xuất hiện card trong section Available discounts\n- Chức năng nút \"Add discount\"\n- Mở modal với tiêu đề đúng\n- Tất cả trường bắt buộc và quy tắc xác thực của chúng\n- Trường tùy chọn và giá trị mặc định của chúng\n- Kịch bản lỗi với thông báo lỗi chính xác\n- Kịch bản thành công với xác thực toast\n- Di chuyển card sang section Active discounts\n- Định dạng hiển thị Active discount\n- Chức năng Edit mở lại modal\n- Chức năng Remove với xác nhận\n\n**Cho Trường Đầu Vào, Test:**\n- Giá trị biên (tối thiểu và tối đa)\n- Kiểu dữ liệu không hợp lệ\n- Giới hạn độ chính xác thập phân\n- Xác thực trường bắt buộc\n- Hành vi tương tác trường\n- Hiển thị bàn phím mobile\n- Hành vi copy/paste\n- Xử lý ký tự đặc biệt\n\n**Cho Trạng Thái UI, Test:**\n- Thông báo trạng thái trống (văn bản chính xác)\n- Thông báo trạng thái đầy (văn bản chính xác)\n- Trạng thái loading và spinner\n- Thời gian và nội dung toast message\n- Hành vi overlay modal\n- Hiển thị header section\n- Tính nhất quán thứ tự card\n\n### 6. Tiêu Chuẩn Chất Lượng:\n- Mỗi test case phải có thể thực thi và xác thực độc lập\n- Tập trung vào testing các yêu cầu cụ thể được đề cập trong ticket\n- Bao gồm xác thực văn bản chính xác cho tất cả thông báo UI\n- Test cả kịch bản tích cực và tiêu cực\n- Ưu tiên các test case có thể phát hiện vi phạm yêu cầu\n- Bao gồm boundary testing cho tất cả đầu vào số\n- Test hành vi dành riêng cho mobile riêng biệt\n- Xác thực sự bền vững database khi được đề cập\n\n### 7. Ví Dụ Cấu Trúc Test Case:\n\n**Cho Hiển Thị UI:**\n```json\n{\n  \"Action\": \"<p>Tải trang giảm giá lần đầu tiên</p>\",\n  \"Input\": \"<p>Người dùng điều hướng đến trang giảm giá mà không có giảm giá nào tồn tại</p>\",\n  \"Expected result\": \"<ol><li>Trang hiển thị hai section: <strong>Active discounts</strong> và <strong>Available discounts</strong></li><li>Section Active discounts hiển thị: <strong>Bạn chưa có giảm giá nào đang hoạt động, hãy thêm giảm giá đầu tiên bên dưới.</strong></li><li>Section Available discounts hiển thị 6 card giảm giá theo thứ tự: <strong>Longer stays, Last minute, Early bird, Mobile users, Membership deal, New listing promotion</strong></li></ol>\",\n  \"Group\": \"Tải Trang Ban Đầu & Trạng Thái Mặc Định\"\n}\n```\n\n**Cho Xác Thực Đầu Vào:**\n```json\n{\n  \"Action\": \"<p>Nhập phần trăm giảm giá không hợp lệ trong modal Last minute</p>\",\n  \"Input\": \"<p>Người dùng nhập <strong>abc</strong> vào trường discount</p>\",\n  \"Expected result\": \"<ol><li>Trường từ chối đầu vào không phải số</li><li>Khi người dùng click Add, thông báo lỗi hiển thị: <strong>Vui lòng nhập một phần trăm hợp lệ.</strong></li><li>Modal vẫn mở</li></ol>\",\n  \"Group\": \"Xác Thực Đầu Vào - Giảm Giá Last Minute\"\n}\n```\n\n**Cho Luồng Thành Công:**\n```json\n{\n  \"Action\": \"<p>Thêm thành công một giảm giá Last minute</p>\",\n  \"Input\": \"<p>Người dùng chọn <strong>7 ngày</strong> trước check-in và nhập <strong>15</strong> phần trăm giảm giá</p>\",\n  \"Expected result\": \"<ol><li>Modal đóng</li><li>Toast thành công xuất hiện với thông báo và tự động đóng sau 2 giây</li><li>Card Last minute được xóa khỏi section Available discounts</li><li>Card mới xuất hiện trong section Active discounts với định dạng: <strong>Last minute | 15% off</strong></li><li>Nội dung discount hiển thị: <strong>Đặt phòng được thực hiện trong vòng 7 ngày trước check-in.</strong></li></ol>\",\n  \"Group\": \"Luồng Thành Công - Giảm Giá Last Minute\"\n}\n```\n\n## YÊU CẦU TÍNH NĂNG CẦN TEST:\n{{ $('On form submission').item.json['Ticket Id'] }}\n\n\n{{ $('On form submission').item.json.Descriptions }}\n\n**QUAN TRỌNG:** Tạo các test case xác thực MỌI yêu cầu cụ thể, văn bản UI, thông báo lỗi, giá trị mặc định, quy tắc xác thực, và logic nghiệp vụ được đề cập trong mô tả tính năng ở trên. Đặc biệt chú ý đến:\n- Xác thực văn bản chính xác cho tất cả thông báo UI\n- Quy tắc và ranh giới xác thực số\n- Hành vi modal và quản lý trạng thái\n- Logic di chuyển section\n- Giá trị mặc định và điền sẵn\n- Hành vi dành riêng cho mobile\n- Thời gian và nội dung toast\n- Yêu cầu bền vững database\n- Tối đa 25 test case\n- Với những nghiệp vụ liên quan đến ngày tháng, hãy đưa ra ví dụ ngày tháng cụ thể, hôm nay là {{ $('On form submission').item.json.submittedAt }}\n\nNow: {{ $('On form submission').item.json.submittedAt }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [720, -768],
+      "id": "46a994f5-112a-4f35-95ac-c5c5e957b258",
+      "name": "AI Agent Vietnamese"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Now: {{ $('On form submission').item.json.submittedAt }}\n# Enhanced Test Case Generation Prompt\n\nYou are to act as a senior, meticulous QA Engineer. Your mission is to create a comprehensive set of test cases that directly validate the specific requirements outlined in the feature ticket provided below.\n\n## MANDATORY RULES:\n\n### 1. Output Format:\n- The final output must be a **single, raw JSON object**. Do not wrap it in a code block or add any explanatory text.\n- This JSON object must contain a single key: `\"test_cases\"`.\n- The value of `\"test_cases\"` must be an array of objects, where each object represents a single test step.\n\n### 2. Test Step Object Structure:\nEach object within the `\"test_cases\"` array must contain exactly these four key-value pairs:\n- `\"Action\"`: (String) The action the user performs.\n- `\"Input\"`: (String) The input data or preconditions for the action.\n- `\"Expected result\"`: (String) The expected outcome after the action.\n- `\"Group\"`: (String) The name of the test scenario or group.\n\n### 3. Content and Formatting Guidelines:\n\n**CRITICAL: Use HTML for Formatting**\n- You must use simple HTML tags within the string values to format the text for readability.\n- Use `<p>` for paragraphs, `<ol>` and `<li>` for ordered lists, and `<strong>` for emphasis.\n- This is a mandatory requirement.\n\n**Logical Grouping:**\n- Use the \"Group\" key to categorize related steps.\n- Use descriptive group names like:\n  - \"Initial Page Load & Default State\"\n  - \"Section Display Logic\"\n  - \"Modal Validation - [Discount Type]\"\n  - \"Data Input Validation - [Field Name]\"\n  - \"Error Handling - [Specific Error]\"\n  - \"Success Flow - [Action]\"\n  - \"UI State Transitions\"\n  - \"Default Values & Pre-population\"\n  - \"Business Rule Validation\"\n\n### 4. COMPREHENSIVE REQUIREMENT COVERAGE:\n\n**A. UI Display & Layout Testing:**\n- Test initial page load with default states\n- Verify section divisions and their contents\n- Test empty state messages (exact text verification)\n- Test \"all discounts added\" state message\n- Verify card ordering in both sections\n- Test responsive behavior and mobile-specific elements\n\n**B. Default Values & Pre-population:**\n- Test all default values mentioned in requirements\n- Verify pre-selected options and their behavior\n- Test flag-based default behaviors (like YR-19690)\n- Verify new listing default discounts application\n\n**C. Modal Behavior Testing:**\n- Test modal opening/closing for each discount type\n- Verify modal title and content accuracy\n- Test all buttons (Add, Cancel, Close) functionality\n- Test modal state persistence and data clearing\n\n**D. Input Validation (Detailed):**\n- Test each field's data type restrictions\n- Test decimal place limitations (up to 2 decimal places)\n- Test minimum/maximum value constraints\n- Test integer vs floating point validation\n- Test empty field validation\n- Test mobile keyboard display for numeric fields\n- Test special characters and invalid inputs\n\n**E. Error Message Validation:**\n- Test exact error message text for each validation rule\n- Test error message positioning and timing\n- Test error message clearing behavior\n- Test multiple error scenarios\n\n**F. Success Flow Testing:**\n- Test successful data submission\n- Test toast message display and auto-close timing (2s)\n- Test data persistence in database\n- Test UI state updates after success\n\n**G. Dynamic Content Testing:**\n- Test name format changes based on discount count\n- Test content format variations (1 vs 2-4 discounts)\n- Test channel display in alphabetical order\n- Test discount removal and re-addition flow\n\n**H. Business Logic Validation:**\n- Test discount type ordering requirements\n- Test section movement logic (Available ↔ Active)\n- Test channel selection requirements\n- Test stay length validation rules\n- Test percentage calculation logic\n\n### 5. SPECIFIC VALIDATION POINTS TO INCLUDE:\n\n**For Each Discount Type, Test:**\n- Card appearance in Available discounts section\n- \"Add discount\" button functionality\n- Modal opening with correct title\n- All required fields and their validation rules\n- Optional fields and their default values\n- Error scenarios with exact error messages\n- Success scenario with toast verification\n- Card movement to Active discounts section\n- Active discount display format\n- Edit functionality reopening modal\n- Remove functionality with confirmation\n\n**For Input Fields, Test:**\n- Boundary values (minimum and maximum)\n- Invalid data types\n- Decimal precision limits\n- Required field validation\n- Field interaction behavior\n- Mobile keyboard display\n- Copy/paste behavior\n- Special character handling\n\n**For UI States, Test:**\n- Empty state messages (exact text)\n- Full state messages (exact text)\n- Loading states and spinners\n- Toast message timing and content\n- Modal overlay behavior\n- Section header display\n- Card ordering consistency\n\n### 6. Quality Standards:\n- Each test case must be independently executable and verifiable\n- Focus on testing specific requirements mentioned in the ticket\n- Include exact text verification for all UI messages\n- Test both positive and negative scenarios\n- Prioritize test cases that would catch requirement violations\n- Include boundary testing for all numerical inputs\n- Test mobile-specific behaviors separately\n- Verify database persistence where mentioned\n\n### 7. Test Case Structure Examples:\n\n**For UI Display:**\n```json\n{\n  \"Action\": \"<p>Load the discount page for the first time</p>\",\n  \"Input\": \"<p>User navigates to discount page with no existing discounts</p>\",\n  \"Expected result\": \"<ol><li>Page displays two sections: <strong>Active discounts</strong> and <strong>Available discounts</strong></li><li>Active discounts section shows: <strong>You don't have any active discounts, add your first discount below.</strong></li><li>Available discounts section shows 6 discount cards in order: <strong>Longer stays, Last minute, Early bird, Mobile users, Membership deal, New listing promotion</strong></li></ol>\",\n  \"Group\": \"Initial Page Load & Default State\"\n}\n```\n\n**For Input Validation:**\n```json\n{\n  \"Action\": \"<p>Enter invalid discount percentage in Last minute modal</p>\",\n  \"Input\": \"<p>User enters <strong>abc</strong> in discount field</p>\",\n  \"Expected result\": \"<ol><li>Field rejects non-numeric input</li><li>When user clicks Add, error message displays: <strong>Please enter a valid percentage.</strong></li><li>Modal remains open</li></ol>\",\n  \"Group\": \"Input Validation - Last Minute Discount\"\n}\n```\n\n**For Success Flow:**\n```json\n{\n  \"Action\": \"<p>Successfully add a Last minute discount</p>\",\n  \"Input\": \"<p>User selects <strong>7 days</strong> before check-in and enters <strong>15</strong> percent discount</p>\",\n  \"Expected result\": \"<ol><li>Modal closes</li><li>Success toast appears with message and auto-closes after 2 seconds</li><li>Last minute card removed from Available discounts section</li><li>New card appears in Active discounts section with format: <strong>Last minute | 15% off</strong></li><li>Discount content shows: <strong>Bookings made within 7 days of check-in.</strong></li></ol>\",\n  \"Group\": \"Success Flow - Last Minute Discount\"\n}\n```\n\n## FEATURE REQUIREMENTS TO TEST:\n\n{{ $('On form submission').item.json.Descriptions }}\n\n**IMPORTANT:** Generate test cases that validate EVERY specific requirement, UI text, error message, default value, validation rule, and business logic mentioned in the feature description above. Pay special attention to:\n- Exact text verification for all UI messages\n- Numerical validation rules and boundaries\n- Modal behavior and state management\n- Section movement logic\n- Default values and pre-population\n- Mobile-specific behaviors\n- Toast timing and content\n- Database persistence requirements\n\nNow: {{ $('On form submission').item.json.submittedAt }}",
+        "hasOutputParser": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [720, -288],
+      "id": "2331e66c-d66b-492e-9a6b-32ab830cd637",
+      "name": "AI Agent English"
+    },
+    {
+      "parameters": {
+        "model": "x-ai/grok-4-fast:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [1136, -480],
+      "id": "133aacdc-1b1d-4a30-9f6e-00bd6f48dfa4",
+      "name": "x-ai/grok-4-fast:free",
+      "credentials": {
+        "openRouterApi": {
+          "id": "RaguXmfMLmMbcRAY",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [672, -576],
+      "id": "dc47f150-365e-4edd-a509-bee0a2d22d2d",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "AQmYYfWMqwhDm23P",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Create Sheet for ticket1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sheet for ticket": {
+      "main": [
+        [
+          {
+            "node": "AI Agent English",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON": {
+      "main": [
+        [
+          {
+            "node": "Split TCs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split TCs": {
+      "main": [
+        [
+          {
+            "node": "Update TCs to sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 2.0 flash": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent English",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Sheet for ticket1": {
+      "main": [
+        [
+          {
+            "node": "AI Agent Vietnamese",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse JSON1": {
+      "main": [
+        [
+          {
+            "node": "Split TCs1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split TCs1": {
+      "main": [
+        [
+          {
+            "node": "Update TCs to sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini 2.0 flash1": {
+      "ai_languageModel": [[]]
+    },
+    "AI Agent Vietnamese": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent English": {
+      "main": [
+        [
+          {
+            "node": "Parse JSON",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "x-ai/grok-4-fast:free": {
+      "ai_languageModel": [[]]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent Vietnamese",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "951daa52-94fe-4875-8192-4fe9e6cb901f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ac6c7862c7fac31a3d238dafd94cbe61c247b703a00f98a8e9f9764fcbc6bc42"
+  },
+  "id": "Tyx2OqOUy2kMZThu",
+  "tags": []
+}
