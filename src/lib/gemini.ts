@@ -30,7 +30,7 @@ const responseSchema: ResponseSchema = {
   required: ["test_cases"],
 };
 
-function buildEnglishPrompt(requirements: string): string {
+function buildEnglishPrompt(requirements: string, maxTestCases: number): string {
   const now = new Date().toISOString();
   return `Now: ${now}
 # Enhanced Test Case Generation Prompt
@@ -119,7 +119,7 @@ Each object within the "test_cases" array must contain exactly these four key-va
 - Test both positive and negative scenarios
 - Prioritize test cases that would catch requirement violations
 - Include boundary testing for all numerical inputs
-- Maximum 25 test cases
+- Maximum ${maxTestCases} test cases
 - For date-related business logic, provide specific example dates, today is ${now}
 
 ## FEATURE REQUIREMENTS TO TEST:
@@ -131,7 +131,10 @@ ${requirements}
 Now: ${now}`;
 }
 
-function buildVietnamesePrompt(requirements: string): string {
+function buildVietnamesePrompt(
+  requirements: string,
+  maxTestCases: number,
+): string {
   const now = new Date().toISOString();
   return `Now: ${now}
 # Prompt Tạo Test Case Nâng Cao
@@ -218,7 +221,7 @@ Mỗi object trong mảng "test_cases" phải chứa chính xác bốn cặp key
 - Bao gồm xác thực văn bản chính xác cho tất cả thông báo UI
 - Test cả kịch bản tích cực và tiêu cực
 - Ưu tiên các test case có thể phát hiện vi phạm yêu cầu
-- Tối đa 25 test case
+- Tối đa ${maxTestCases} test case
 - Với những nghiệp vụ liên quan đến ngày tháng, hãy đưa ra ví dụ ngày tháng cụ thể, hôm nay là ${now}
 
 ## YÊU CẦU TÍNH NĂNG CẦN TEST:
@@ -255,6 +258,7 @@ export async function generateTestCases(
   requirements: string,
   language: "en" | "vi",
   apiKey?: string,
+  maxTestCases = 25,
 ): Promise<TestCase[]> {
   const model = getClient(apiKey).getGenerativeModel({
     model: "gemini-flash-latest",
@@ -266,8 +270,8 @@ export async function generateTestCases(
 
   const prompt =
     language === "vi"
-      ? buildVietnamesePrompt(requirements)
-      : buildEnglishPrompt(requirements);
+      ? buildVietnamesePrompt(requirements, maxTestCases)
+      : buildEnglishPrompt(requirements, maxTestCases);
 
   return callWithRetry(async () => {
     const result = await model.generateContent(prompt);

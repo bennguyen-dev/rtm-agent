@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { generateTestCases } from "@/lib/gemini";
 import { checkLimit } from "@/lib/rate-limit";
-import type { GenerateRequest, GenerateResponse } from "@/lib/types";
+import {
+  type GenerateRequest,
+  type GenerateResponse,
+  MAX_TEST_CASES_OPTIONS,
+  type MaxTestCases,
+} from "@/lib/types";
 
 const MAX_REQUIREMENTS_LENGTH = 50_000;
 
@@ -54,12 +59,17 @@ export async function POST(request: Request) {
     }
 
     const language = body.language || "en";
+    const maxTestCases: MaxTestCases = MAX_TEST_CASES_OPTIONS.includes(
+      body.maxTestCases as MaxTestCases,
+    )
+      ? (body.maxTestCases as MaxTestCases)
+      : 25;
     const results: GenerateResponse[] = [];
 
     if (language === "both") {
       const [enCases, viCases] = await Promise.all([
-        generateTestCases(body.requirements, "en", userApiKey),
-        generateTestCases(body.requirements, "vi", userApiKey),
+        generateTestCases(body.requirements, "en", userApiKey, maxTestCases),
+        generateTestCases(body.requirements, "vi", userApiKey, maxTestCases),
       ]);
       results.push(
         { test_cases: enCases, language: "en" },
@@ -70,6 +80,7 @@ export async function POST(request: Request) {
         body.requirements,
         language,
         userApiKey,
+        maxTestCases,
       );
       results.push({ test_cases: testCases, language });
     }

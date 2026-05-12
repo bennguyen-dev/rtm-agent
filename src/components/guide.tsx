@@ -33,17 +33,30 @@ export function Guide() {
             <p className="text-sm text-slate-600 leading-relaxed">
               Use Jira Rovo agent to rewrite your ticket as Markdown for AI.
             </p>
+            <div className="rounded-lg overflow-hidden border border-slate-200 bg-white">
+              {/* biome-ignore lint/performance/noImgElement: static screenshot in /public, no remote optimization needed */}
+              <img
+                  src="/img.png"
+                  alt="Rovo agent example: paste the prompt into the chat to rewrite the ticket as Markdown."
+                  width={441}
+                  height={960}
+                  className="w-full h-auto"
+              />
+            </div>
             <div className="group relative">
               <div className="rounded-lg bg-slate-50 p-3 border border-slate-200 group-hover:border-primary/30 transition-colors">
                 <code className="text-xs text-primary font-mono break-words leading-relaxed">
-                  "pls help me to rewrite this ticket as markdown to use for
-                  input of model LLM, only markdown not render"
+                  "Rewrite this ticket as raw Markdown for LLM input. Return
+                  the Markdown source only — do NOT render or preview it. If
+                  the ticket links to external pages (Confluence, Google Docs,
+                  etc.), open each link and inline the full linked content so
+                  nothing is missing."
                 </code>
                 <button
                   type="button"
                   onClick={() =>
                     navigator.clipboard.writeText(
-                      "pls help me to rewrite this ticket as markdown to use for input of model LLM, only markdown not render",
+                      "Rewrite this ticket as raw Markdown for LLM input. Return the Markdown source only — do NOT render or preview it. If the ticket links to external pages (Confluence, Google Docs, etc.), open each link and inline the full linked content so nothing is missing.",
                     )
                   }
                   className="absolute right-2 top-2 p-1.5 rounded-md bg-white text-slate-400 opacity-0 group-hover:opacity-100 hover:text-primary transition-all border border-slate-200 shadow-sm"
@@ -53,6 +66,7 @@ export function Guide() {
                 </button>
               </div>
             </div>
+
           </div>
         </div>
 

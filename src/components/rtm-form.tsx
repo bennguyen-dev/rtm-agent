@@ -2,7 +2,11 @@
 
 import { ChevronDown, KeyRound } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { GenerateResponse } from "@/lib/types";
+import {
+  type GenerateResponse,
+  MAX_TEST_CASES_OPTIONS,
+  type MaxTestCases,
+} from "@/lib/types";
 
 const API_KEY_STORAGE = "rtm.gemini_api_key";
 
@@ -15,6 +19,7 @@ export function RtmForm({ onGenerated, onTicketIdChange }: RtmFormProps) {
   const [requirements, setRequirements] = useState("");
   const [_ticketId, setTicketId] = useState("");
   const [language, setLanguage] = useState<"en" | "vi" | "both">("vi");
+  const [maxTestCases, setMaxTestCases] = useState<MaxTestCases>(25);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [apiKey, setApiKey] = useState("");
@@ -55,7 +60,7 @@ export function RtmForm({ onGenerated, onTicketIdChange }: RtmFormProps) {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers,
-        body: JSON.stringify({ requirements, language }),
+        body: JSON.stringify({ requirements, language, maxTestCases }),
       });
 
       const data = await res.json();
@@ -131,6 +136,31 @@ export function RtmForm({ onGenerated, onTicketIdChange }: RtmFormProps) {
             </button>
           ))}
         </div>
+      </fieldset>
+
+      <fieldset>
+        <legend className="block text-sm font-medium text-slate-700 mb-3">
+          Max test cases
+        </legend>
+        <div className="flex gap-3">
+          {MAX_TEST_CASES_OPTIONS.map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setMaxTestCases(n)}
+              className={`flex-1 rounded-xl px-4 py-3 text-sm font-medium transition-all cursor-pointer border-2 ${
+                maxTestCases === n
+                  ? "bg-primary/5 border-primary text-primary shadow-md shadow-primary/10"
+                  : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700"
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          Higher = more coverage but slower and more token usage.
+        </p>
       </fieldset>
 
       <div className="rounded-xl border border-slate-200 bg-slate-50/50">
