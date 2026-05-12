@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { ChevronDown, KeyRound } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { GenerateResponse } from "@/lib/types";
+
+const API_KEY_STORAGE = "rtm.gemini_api_key";
 
 interface RtmFormProps {
   onGenerated: (results: GenerateResponse[]) => void;
@@ -11,9 +14,21 @@ interface RtmFormProps {
 export function RtmForm({ onGenerated, onTicketIdChange }: RtmFormProps) {
   const [requirements, setRequirements] = useState("");
   const [_ticketId, setTicketId] = useState("");
-  const [language, setLanguage] = useState<"en" | "vi" | "both">("en");
+  const [language, setLanguage] = useState<"en" | "vi" | "both">("vi");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [rememberKey, setRememberKey] = useState(false);
+  const [keyOpen, setKeyOpen] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(API_KEY_STORAGE);
+    if (saved) {
+      setApiKey(saved);
+      setRememberKey(true);
+      setKeyOpen(true);
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -26,9 +41,20 @@ export function RtmForm({ onGenerated, onTicketIdChange }: RtmFormProps) {
 
     setLoading(true);
     try {
+      if (rememberKey && apiKey.trim()) {
+        localStorage.setItem(API_KEY_STORAGE, apiKey.trim());
+      } else if (!rememberKey) {
+        localStorage.removeItem(API_KEY_STORAGE);
+      }
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (apiKey.trim()) headers["x-gemini-key"] = apiKey.trim();
+
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ requirements, language }),
       });
 
@@ -49,8 +75,8 @@ export function RtmForm({ onGenerated, onTicketIdChange }: RtmFormProps) {
   }
 
   const languages = [
-    { value: "en", label: "English", emoji: "🇬🇧" },
     { value: "vi", label: "Tiếng Việt", emoji: "🇻🇳" },
+    { value: "en", label: "English", emoji: "🇬🇧" },
   ] as const;
 
   return (
@@ -106,6 +132,67 @@ export function RtmForm({ onGenerated, onTicketIdChange }: RtmFormProps) {
           ))}
         </div>
       </fieldset>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50/50">
+        <button
+          type="button"
+          onClick={() => setKeyOpen((v) => !v)}
+          className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-slate-700 hover:text-slate-900 cursor-pointer"
+          aria-expanded={keyOpen}
+          aria-controls="api-key-section"
+        >
+          <span className="inline-flex items-center gap-2">
+            <KeyRound className="h-4 w-4 text-slate-500" aria-hidden="true" />
+            Use your own Gemini API key
+            <span className="text-xs font-normal text-slate-400">
+              (optional)
+            </span>
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 text-slate-400 transition-transform ${
+              keyOpen ? "rotate-180" : ""
+            }`}
+            aria-hidden="true"
+          />
+        </button>
+
+        {keyOpen && (
+          <div
+            id="api-key-section"
+            className="space-y-3 border-t border-slate-200 px-4 py-4"
+          >
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="AIza..."
+              autoComplete="off"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+            />
+            <label className="flex items-center gap-2 text-xs text-slate-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rememberKey}
+                onChange={(e) => setRememberKey(e.target.checked)}
+                className="h-3.5 w-3.5 rounded border-slate-300 text-primary focus:ring-primary"
+              />
+              Remember on this browser (stored in localStorage)
+            </label>
+            <p className="text-xs text-slate-500">
+              Leave empty to use the shared team key. Get your own at{" "}
+              <a
+                href="https://aistudio.google.com/apikey"
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary hover:underline"
+              >
+                Google AI Studio
+              </a>
+              .
+            </p>
+          </div>
+        )}
+      </div>
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">

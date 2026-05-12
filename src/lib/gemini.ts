@@ -5,7 +5,10 @@ import {
 } from "@google/generative-ai";
 import type { TestCase } from "./types";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+function getClient(apiKey?: string): GoogleGenerativeAI {
+  const key = apiKey?.trim() || process.env.GEMINI_API_KEY || "";
+  return new GoogleGenerativeAI(key);
+}
 
 const responseSchema: ResponseSchema = {
   type: SchemaType.OBJECT,
@@ -251,8 +254,9 @@ async function callWithRetry<T>(
 export async function generateTestCases(
   requirements: string,
   language: "en" | "vi",
+  apiKey?: string,
 ): Promise<TestCase[]> {
-  const model = genAI.getGenerativeModel({
+  const model = getClient(apiKey).getGenerativeModel({
     model: "gemini-flash-latest",
     generationConfig: {
       responseMimeType: "application/json",

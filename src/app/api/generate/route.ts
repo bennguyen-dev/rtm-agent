@@ -1,9 +1,27 @@
 import { NextResponse } from "next/server";
 import { generateTestCases } from "@/lib/gemini";
+import { checkLimit } from "@/lib/rate-limit";
 import type { GenerateRequest, GenerateResponse } from "@/lib/types";
+
+const MAX_REQUIREMENTS_LENGTH = 50_000;
 
 export async function POST(request: Request) {
   try {
+    const ip =
+      request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const limit = checkLimit(ip);
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: `Rate limit exceeded. Try again in ${limit.retryAfterSec}s.` },
+        {
+          status: 429,
+          headers: { "Retry-After": String(limit.retryAfterSec) },
+        },
+      );
+    }
+
     const body = (await request.json()) as GenerateRequest;
 
     if (!body.requirements?.trim()) {
@@ -13,16 +31,25 @@ export async function POST(request: Request) {
       );
     }
 
-    if (
-      !process.env.GEMINI_API_KEY ||
-      process.env.GEMINI_API_KEY === "your_api_key_here"
-    ) {
+    if (body.requirements.length > MAX_REQUIREMENTS_LENGTH) {
+      return NextResponse.json(
+        {
+          error: `Requirements too long (max ${MAX_REQUIREMENTS_LENGTH} characters)`,
+        },
+        { status: 400 },
+      );
+    }
+
+    const userApiKey = request.headers.get("x-gemini-key")?.trim() || "";
+    const effectiveKey = userApiKey || process.env.GEMINI_API_KEY || "";
+
+    if (!effectiveKey || effectiveKey === "your_api_key_here") {
       return NextResponse.json(
         {
           error:
-            "GEMINI_API_KEY is not configured. Please add your API key to .env.local",
+            "No Gemini API key available. Add one in 'Use your own API key' or configure GEMINI_API_KEY on the server.",
         },
-        { status: 500 },
+        { status: 400 },
       );
     }
 
@@ -31,15 +58,19 @@ export async function POST(request: Request) {
 
     if (language === "both") {
       const [enCases, viCases] = await Promise.all([
-        generateTestCases(body.requirements, "en"),
-        generateTestCases(body.requirements, "vi"),
+        generateTestCases(body.requirements, "en", userApiKey),
+        generateTestCases(body.requirements, "vi", userApiKey),
       ]);
       results.push(
         { test_cases: enCases, language: "en" },
         { test_cases: viCases, language: "vi" },
       );
     } else {
-      const testCases = await generateTestCases(body.requirements, language);
+      const testCases = await generateTestCases(
+        body.requirements,
+        language,
+        userApiKey,
+      );
       results.push({ test_cases: testCases, language });
     }
 
