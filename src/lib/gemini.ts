@@ -3,7 +3,7 @@ import {
   type ResponseSchema,
   SchemaType,
 } from "@google/generative-ai";
-import type { TestCase } from "./types";
+import { DEFAULT_GEMINI_MODEL, type GeminiModel, type TestCase } from "./types";
 
 function getClient(apiKey?: string): GoogleGenerativeAI {
   const key = apiKey?.trim() || process.env.GEMINI_API_KEY || "";
@@ -257,12 +257,17 @@ async function callWithRetry<T>(
     try {
       return await fn();
     } catch (error) {
-      const is429 = error instanceof Error && error.message.includes("429");
-      if (!is429 || attempt === maxRetries) throw error;
+      const msg = error instanceof Error ? error.message : "";
+      const isRateLimit = msg.includes("429");
+      // 503 = model quá tải, 500/502 = lỗi server tạm thời — đều nên retry
+      const isOverloaded = /\b(500|502|503)\b/.test(msg);
+      if ((!isRateLimit && !isOverloaded) || attempt === maxRetries) throw error;
 
-      const delay = Math.min(15000 * 2 ** attempt, 60000);
+      // Rate-limit cần chờ lâu (quota reset theo phút); overload thường hồi nhanh
+      const base = isRateLimit ? 15000 : 2000;
+      const delay = Math.min(base * 2 ** attempt, 60000);
       console.log(
-        `Rate limited. Retrying in ${delay / 1000}s (attempt ${attempt + 1}/${maxRetries})...`,
+        `${isRateLimit ? "Rate limited" : "Model overloaded"}. Retrying in ${delay / 1000}s (attempt ${attempt + 1}/${maxRetries})...`,
       );
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
@@ -275,9 +280,10 @@ export async function generateTestCases(
   language: "en" | "vi",
   apiKey?: string,
   maxTestCases = 25,
+  modelName: GeminiModel = DEFAULT_GEMINI_MODEL,
 ): Promise<TestCase[]> {
   const model = getClient(apiKey).getGenerativeModel({
-    model: "gemini-flash-latest",
+    model: modelName,
     generationConfig: {
       responseMimeType: "application/json",
       responseSchema,

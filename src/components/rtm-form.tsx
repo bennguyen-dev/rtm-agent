@@ -3,6 +3,9 @@
 import { ChevronDown, KeyRound } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
+  DEFAULT_GEMINI_MODEL,
+  GEMINI_MODELS,
+  type GeminiModel,
   type GenerateResponse,
   MAX_TEST_CASES_OPTIONS,
   type MaxTestCases,
@@ -20,6 +23,7 @@ export function RtmForm({ onGenerated, onTicketIdChange }: RtmFormProps) {
   const [_ticketId, setTicketId] = useState("");
   const [language, setLanguage] = useState<"en" | "vi" | "both">("vi");
   const [maxTestCases, setMaxTestCases] = useState<MaxTestCases>(25);
+  const [model, setModel] = useState<GeminiModel>(DEFAULT_GEMINI_MODEL);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [apiKey, setApiKey] = useState("");
@@ -60,7 +64,7 @@ export function RtmForm({ onGenerated, onTicketIdChange }: RtmFormProps) {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers,
-        body: JSON.stringify({ requirements, language, maxTestCases }),
+        body: JSON.stringify({ requirements, language, maxTestCases, model }),
       });
 
       const data = await res.json();
@@ -160,6 +164,31 @@ export function RtmForm({ onGenerated, onTicketIdChange }: RtmFormProps) {
         </div>
         <p className="mt-2 text-xs text-slate-500">
           Higher = more coverage but slower and more token usage.
+        </p>
+      </fieldset>
+
+      <fieldset>
+        <legend className="block text-sm font-medium text-slate-700 mb-3">
+          Model
+        </legend>
+        <div className="flex gap-3">
+          {GEMINI_MODELS.map((m) => (
+            <button
+              key={m.value}
+              type="button"
+              onClick={() => setModel(m.value)}
+              className={`flex-1 rounded-xl px-4 py-3 text-sm font-medium transition-all cursor-pointer border-2 ${
+                model === m.value
+                  ? "bg-primary/5 border-primary text-primary shadow-md shadow-primary/10"
+                  : "bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:text-slate-700"
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-slate-500">
+          {GEMINI_MODELS.find((m) => m.value === model)?.hint}
         </p>
       </fieldset>
 

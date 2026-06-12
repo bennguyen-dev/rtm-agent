@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { generateTestCases } from "@/lib/gemini";
 import { checkLimit } from "@/lib/rate-limit";
 import {
+  DEFAULT_GEMINI_MODEL,
+  GEMINI_MODELS,
+  type GeminiModel,
   type GenerateRequest,
   type GenerateResponse,
   MAX_TEST_CASES_OPTIONS,
@@ -64,12 +67,27 @@ export async function POST(request: Request) {
     )
       ? (body.maxTestCases as MaxTestCases)
       : 25;
+    const model: GeminiModel = GEMINI_MODELS.some((m) => m.value === body.model)
+      ? (body.model as GeminiModel)
+      : DEFAULT_GEMINI_MODEL;
     const results: GenerateResponse[] = [];
 
     if (language === "both") {
       const [enCases, viCases] = await Promise.all([
-        generateTestCases(body.requirements, "en", userApiKey, maxTestCases),
-        generateTestCases(body.requirements, "vi", userApiKey, maxTestCases),
+        generateTestCases(
+          body.requirements,
+          "en",
+          userApiKey,
+          maxTestCases,
+          model,
+        ),
+        generateTestCases(
+          body.requirements,
+          "vi",
+          userApiKey,
+          maxTestCases,
+          model,
+        ),
       ]);
       results.push(
         { test_cases: enCases, language: "en" },
@@ -81,6 +99,7 @@ export async function POST(request: Request) {
         language,
         userApiKey,
         maxTestCases,
+        model,
       );
       results.push({ test_cases: testCases, language });
     }
